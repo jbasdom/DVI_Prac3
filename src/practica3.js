@@ -82,6 +82,23 @@ var Q = window.Q = Quintus()
 		}
 	});
 
+	Q.Sprite.extend("Princess", {
+		init: function(p) {
+			this._super(p, {
+				sheet: "princess",
+				frame: 0,
+				x: 1800,
+				y: 380
+			});
+
+			this.on("bump.left, bump.right, bump.top", function(collision) {
+				if (collision.obj.isA("Mario")) {
+					Q.stageScene("winGame", 1, { label: "You Won!" });
+				}
+			})
+		}
+	});
+
 	Q.scene("level1", function(stage) {
 		Q.stageTMX("level.tmx", stage);
 		const mario = stage.insert(new Q.Mario());
@@ -91,6 +108,7 @@ var Q = window.Q = Quintus()
 
 		stage.insert(new Q.Goomba());
 		stage.insert(new Q.Bloopa());
+		stage.insert(new Q.Princess());
 	});
 
 	Q.scene("endGame", function(stage) {
@@ -157,13 +175,40 @@ var Q = window.Q = Quintus()
 			Q.clearStages();
 			Q.stageScene("level1");
 		});
+		
 		container.fit(20);
 	});
+
+	Q.scene("mainMenu", function(stage) {
+		const container = stage.insert(
+			new Q.UI.Container({
+				x: Q.width,
+				y: Q.height
+			})
+		);
+
+		const button = container.insert(
+			new Q.UI.Button({
+				x: -Q.width/2,
+				y: -Q.height/2,
+				fill: "#CCCCCC",
+				asset: "mainTitle.png"
+			})
+		);
+
+		button.on("click", function() {
+			Q.clearStages();
+			Q.stageScene("level1");
+		});
+
+		container.fit(20);
+	})
 	
-	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png", function() {
+	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png, princess.json, princess.png", function() {
 		Q.compileSheets("mario_small.png", "mario_small.json");
 		Q.compileSheets("goomba.png", "goomba.json");
 		Q.compileSheets("bloopa.png", "bloopa.json");
+		Q.compileSheets("princess.png", "princess.json");
 		Q.stageScene("level1");
 	});
 };
