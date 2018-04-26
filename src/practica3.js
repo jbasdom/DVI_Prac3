@@ -7,14 +7,18 @@ var Q = window.Q = Quintus()
 	Q.Sprite.extend("Mario", {
 		init: function(p) {
 			this._super(p, {
+				sprite: "mario_anim",
 				sheet: "marioR",
+				gravity: 0.65,
 				frame: 0,
 				x: 150,
 				y: 380
 			});
-			this.add("2d, platformerControls");
+			this.add("2d, platformerControls, animation");
 			this.on("hit.sprite", function(collision) {
-				// TODO
+				this.p.vy = 150;
+				this.play("death");
+				this.destroy();
 			});
 		},
 
@@ -25,8 +29,23 @@ var Q = window.Q = Quintus()
 				this.p.x = 150;
 				this.p.y = 380;
 			}
+			if (this.p.vx === 0) this.play("stand_right");
+			if (this.p.vx > 0) this.play("walk_right");
+			if (this.p.vx < 0) this.play("walk_left");
+			if (this.p.vy > 0 || this.p.vy < 0) this.play("jump_right");
+			if ((this.p.vy > 0 || this.p.vy < 0) && this.p.vx < 0) this.play("jump_left");
 		}
 	});
+
+	Q.animations("mario_anim", {
+		stand_right: { frames: [0], flip: false, loop: true },
+		stand_left: { frames: [0], flip: "x", loop: true },
+		walk_right: { frames: [1,2,3], rate: 1/10, flip: false, loop: true },
+		walk_left: { frames: [1,2,3], rate: 1/10, flip: "x", loop: true },
+		jump_right: { frames: [4], flip: false, loop: true },
+		jump_left: { frames: [4], flip: "x", loop: true },
+		death: { frames: [12], flip: false, loop: true }
+	})
 
 	Q.Sprite.extend("Goomba", {
 		init: function(p) {
@@ -42,7 +61,6 @@ var Q = window.Q = Quintus()
 			this.on("bump.left, bump.right, bump.bottom", function(collision) {
 				if (collision.obj.isA("Mario")) {
 					Q.stageScene("endGame", 1, { label: "You Died" });
-					collision.obj.destroy();
 				}
 			});
 			this.on("bump.top", function(collision) {
@@ -62,16 +80,15 @@ var Q = window.Q = Quintus()
 				frame: 0,
 				x: 500,
 				y: 480,
-				vy: 50
+				vy: 150
 			});
 
 			this.add("2d, aiBounce");
 			this.on("bump.left, bump.right, bump.bottom", function(collision) {
 				if (collision.obj.isA("Mario")) {
 					Q.stageScene("endGame", 1, { label: "You Died" });
-					collision.obj.destroy();
 				}
-				else this.p.vy = -100;
+				else this.p.vy = -150;
 			})
 			this.on("bump.top", function(collision) {
 				if (collision.obj.isA("Mario")) {
@@ -85,12 +102,13 @@ var Q = window.Q = Quintus()
 	Q.Sprite.extend("Princess", {
 		init: function(p) {
 			this._super(p, {
-				sheet: "princess",
+				asset: "princess.png",
 				frame: 0,
-				x: 1800,
-				y: 380
+				x: 2000,
+				y: 400
 			});
 
+			this.add("2d");
 			this.on("bump.left, bump.right, bump.top", function(collision) {
 				if (collision.obj.isA("Mario")) {
 					Q.stageScene("winGame", 1, { label: "You Won!" });
@@ -204,11 +222,10 @@ var Q = window.Q = Quintus()
 		container.fit(20);
 	})
 	
-	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png, princess.json, princess.png", function() {
+	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png, princess.png", function() {
 		Q.compileSheets("mario_small.png", "mario_small.json");
 		Q.compileSheets("goomba.png", "goomba.json");
 		Q.compileSheets("bloopa.png", "bloopa.json");
-		Q.compileSheets("princess.png", "princess.json");
 		Q.stageScene("level1");
 	});
 };
