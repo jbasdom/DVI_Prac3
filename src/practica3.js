@@ -182,6 +182,58 @@ var Q = window.Q = Quintus()
 		}
 	});
 
+	Q.Sprite.extend("Coin", {
+		init: function(p) {
+			this._super(p, {
+				sheet: "coin_anim",
+				frame: 0,
+				sprite: "coin",
+				gravity: 0,
+				sensor: true,
+				picked: false
+			});
+
+			this.add("tween, animation");
+			this.on("sensor", function(collision) {
+				if (!this.p.collision && collision.isA("Mario")) {
+					Q.state.inc("score", 1);
+					this.p.picked = true;
+					this.animate({ y: this.p.y - 50 }, 0.2, Q.Easing.Linear, {
+						callback: function() {
+							this.destroy();
+						},
+					});
+				}
+			});
+		},
+
+		step: function(p) {
+			this.play("switch");
+		},
+	});
+
+	Q.animations("coin_anim", {
+		switch: { frames: [0, 1, 2], loop: true, rate: 1/2 },
+	});
+
+	Q.UI.Text.extend("Score", {
+		init: function(p) {
+			this._super({
+				label: "Score: 0",
+				x: 60,
+				y: 0,
+			});
+			Q.state.on("change.score", this, "score");
+		},
+		score: function(score) {
+			this.p.label = "score: " + score;
+		}
+	});
+
+	Q.scene("HUD", function(stage) {
+		stage.insert(new Q.Score());
+	});
+
 	Q.scene("level1", function(stage) {
 		Q.stageTMX("level.tmx", stage);
 		const mario = stage.insert(new Q.Mario());
@@ -192,6 +244,13 @@ var Q = window.Q = Quintus()
 		stage.insert(new Q.Goomba());
 		stage.insert(new Q.Bloopa());
 		stage.insert(new Q.Princess());
+		/*
+		stage.insert(new Q.Coin({ x: 250, y: 400 }));
+		stage.insert(new Q.Coin({ x: 500, y: 400 }));
+		stage.insert(new Q.Coin({ x: 750, y: 400 }));
+		stage.insert(new Q.Coin({ x: 1000, y: 400 }));
+		*/
+		stage.insert(new Q.Score());
 	});
 
 	Q.scene("endGame", function(stage) {
@@ -290,7 +349,7 @@ var Q = window.Q = Quintus()
 		container.fit(20);
 	})
 	
-	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png, princess.png, mainTitle.png", function() {
+	Q.loadTMX("level.tmx, mario_small.json, mario_small.png, goomba.json, goomba.png, bloopa.json, bloopa.png, princess.png, mainTitle.png, coin.png", function() {
 		Q.compileSheets("mario_small.png", "mario_small.json");
 		Q.compileSheets("goomba.png", "goomba.json");
 		Q.compileSheets("bloopa.png", "bloopa.json");
